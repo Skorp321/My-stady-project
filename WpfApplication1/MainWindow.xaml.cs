@@ -12,8 +12,6 @@ using StockSharp.Messages;
 using StockSharp.Quik;
 using StockSharp.Xaml.Charting;
 
-using Ookii.Dialogs.Wpf;
-
 using Ecng.Common;
 using Ecng.Xaml;
 using Ecng.Collections;
