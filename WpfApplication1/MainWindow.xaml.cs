@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Windows;
 using System.Linq;
@@ -9,9 +10,14 @@ using StockSharp.Algo.Candles;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 using StockSharp.Quik;
+using StockSharp.Xaml.Charting;
+
+using Ookii.Dialogs.Wpf;
 
 using Ecng.Common;
 using Ecng.Xaml;
+using Ecng.Collections;
+
 
 namespace WpfApplication1
 {
@@ -25,16 +31,26 @@ namespace WpfApplication1
         private Order _order;
         private Portfolio _port;
         private decimal _pr;
+
         private CandleSeries _candleSeries;
+        private CandleManager _candleManager;
         private TimeSpan _timeSpan;
+        private ChartArea _area;
+        private ChartCandleElement _candlesElem;
+
         private ExchangeBoard _board=ExchangeBoard.MicexJunior;
         private string _code = "LKOH";
         Object _obj = new object();
+        private Chart _chart = new Chart();
+        private readonly Dictionary<CandleSeries, ChartWindow> _chartWindows = new Dictionary<CandleSeries, ChartWindow>();
         
         public MainWindow()
         {
             InitializeComponent();
+            
         }
+
+        ChartWindow chartw = new ChartWindow();
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
@@ -79,7 +95,19 @@ namespace WpfApplication1
                 //Подключаемся к терминалу
                 _trader.Connect();
             }
+
+            _candleManager=new CandleManager();
+            _candleManager.Processing += DrowCandle;
+
             ConnectButton.IsEnabled = false;
+        }
+
+        private void DrowCandle(CandleSeries series, Candle candle)
+        {
+            var wnd = _chartWindows.TryGetValue(series);
+
+            if (wnd!=null)
+                wnd.Chart.Draw((ChartCandleElement)wnd.Chart.Areas[0].Elements[0], candle);
         }
 
         private void BayBestBidClick(object sender, RoutedEventArgs e)
@@ -165,12 +193,45 @@ namespace WpfApplication1
 
         private void GetCandelsClick1(object sender, RoutedEventArgs e)
         {
+            _timeSpan=TimeSpan.FromMinutes(5);
+            _candleSeries=new CandleSeries(typeof(TimeFrameCandle), _sec, _timeSpan);
+
+            _chartWindows.SafeAdd(_candleSeries, kay =>
+                {
+                    var wnd = new ChartWindow();
+                    wnd.MakeHideable();
+
+                    _area=new ChartArea();
+                    wnd.Chart.Areas.Add(_area);
+
+                    _candlesElem=new ChartCandleElement();
+                    _area.Elements.Add(_candlesElem);
+
+                    return wnd;
+                }).Show();
+
+            _candleManager.Start(_candleSeries);
+
+/*            _area = new ChartArea();
+            chartw.Chart.Areas.Add(_area);
+
+            _candlesElem=new ChartCandleElement();
+            _area.Elements.Add(_candlesElem);
+
+
+
             //Создаем свечки
             var candleManager = new CandleManager(_trader);
             _timeSpan = TimeSpan.FromMinutes(5);
             _candleSeries=new CandleSeries(typeof(TimeFrameCandle), _sec, _timeSpan);
+            _candleSeries.ProcessCandle+=candle=>this.GuiAsync(() =>
+                {
+                    if (candle.State==CandleStates.Finished)
+                        chartw.Chart.Draw(_candlesElem, candle);
+                });
+
             candleManager.Start(_candleSeries);
-            MessageBox.Show("Сформировали {0} минутные свечки!".Put(_timeSpan));
+            chartw.Show();   */
         }
 
         private void PorfolioComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
