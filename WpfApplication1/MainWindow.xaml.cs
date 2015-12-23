@@ -45,19 +45,19 @@ namespace WpfApplication1
         public MainWindow()
         {
             InitializeComponent();
-            
         }
 
-        ChartWindow chartw = new ChartWindow();
+        readonly ChartWindow _chartWindow = new ChartWindow();
 
         protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
         {
             try
             {
-                if (_trader == null || _trader.ConnectionState == ConnectionStates.Connected)
-                {
+                if (_trader != null || _trader.ConnectionState == ConnectionStates.Connected)
                     _trader.Dispose();
-                }
+
+                if (_chartWindow != null)
+                    _chartWindow.Close();
 
                 base.OnClosing(e);
             }
@@ -87,6 +87,7 @@ namespace WpfApplication1
                 //Подписываемся на события получения новых портфелей и инструментов
                 _trader.NewPortfolios += portfolios=>this.GuiAsync(()=>
                     { PorfolioComboBox.ItemsSource = _trader.Portfolios; });
+
                 _trader.NewSecurities += securities => this.GuiAsync(() =>
                     { SecurityComboBox.ItemsSource = _trader.Securities.Where(s=>s.Board==_board); });
                 
@@ -94,20 +95,9 @@ namespace WpfApplication1
                 _trader.Connect();
             }
 
-            _candleManager=new CandleManager();
-            _candleManager.Processing += DrowCandle;
-
             ConnectButton.IsEnabled = false;
         }
-
-        private void DrowCandle(CandleSeries series, Candle candle)
-        {
-            var wnd = _chartWindows.TryGetValue(series);
-
-            if (wnd!=null)
-                wnd.Chart.Draw((ChartCandleElement)wnd.Chart.Areas[0].Elements[0], candle);
-        }
-
+        
         private void BayBestBidClick(object sender, RoutedEventArgs e)
         {
             try
@@ -191,46 +181,27 @@ namespace WpfApplication1
 
         private void GetCandelsClick1(object sender, RoutedEventArgs e)
         {
-/*            _timeSpan=TimeSpan.FromMinutes(5);
-            _candleSeries=new CandleSeries(typeof(TimeFrameCandle), _sec, _timeSpan);
+            _chartWindow.Show(); //Оображаем окно для чарта
 
-            _chartWindows.SafeAdd(_candleSeries, kay =>
-                {
-                    var wnd = new ChartWindow();
-                    wnd.MakeHideable();
-
-                    _area=new ChartArea();
-                    wnd.Chart.Areas.Add(_area);
-
-                    _candlesElem=new ChartCandleElement();
-                    _area.Elements.Add(_candlesElem);
-
-                    return wnd;
-                }).Show();
-
-            _candleManager.Start(_candleSeries);   */
-            chartw.Show();
-
-            _area = new ChartArea();
-            chartw.Chart.Areas.Add(_area);
+            // Создаем новую область и помещаем ее в каллекциб областей нашего окна
+            _area = new ChartArea(); 
+            _chartWindow.Chart.Areas.Add(_area);
 
             _candlesElem=new ChartCandleElement();
             _area.Elements.Add(_candlesElem);
 
-
-
             //Создаем свечки
             var candleManager = new CandleManager(_trader);
-            _timeSpan = TimeSpan.FromMinutes(5);
+            _timeSpan = TimeSpan.FromMinutes(5);                 // Интервал наших свечек
             _candleSeries=new CandleSeries(typeof(TimeFrameCandle), _sec, _timeSpan);
             _candleSeries.ProcessCandle+=candle=>this.GuiAsync(() =>
                 {
+                    // Если свеча закончена, то отображаем ее на график
                     if (candle.State==CandleStates.Finished)
-                        chartw.Chart.Draw(_candlesElem, candle);
+                        _chartWindow.Chart.Draw(_candlesElem, candle);
                 });
 
             candleManager.Start(_candleSeries);
-               
         }
 
         private void PorfolioComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -238,7 +209,6 @@ namespace WpfApplication1
             //Определяем тип рынка портфеля и заполняем комбобокс инструментами для этого портфеля
             _board = GetExchengeBoardPort((Portfolio)PorfolioComboBox.SelectedItem);
             SecurityComboBox.ItemsSource = _trader.Securities.Where(s => s.Board == _board);
-            
         }
     }
 }
