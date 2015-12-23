@@ -191,7 +191,7 @@ namespace WpfApplication1
 
         private void GetCandelsClick1(object sender, RoutedEventArgs e)
         {
-            _timeSpan=TimeSpan.FromMinutes(5);
+/*            _timeSpan=TimeSpan.FromMinutes(5);
             _candleSeries=new CandleSeries(typeof(TimeFrameCandle), _sec, _timeSpan);
 
             _chartWindows.SafeAdd(_candleSeries, kay =>
@@ -208,9 +208,10 @@ namespace WpfApplication1
                     return wnd;
                 }).Show();
 
-            _candleManager.Start(_candleSeries);
+            _candleManager.Start(_candleSeries);   */
+            chartw.Show();
 
-/*            _area = new ChartArea();
+            _area = new ChartArea();
             chartw.Chart.Areas.Add(_area);
 
             _candlesElem=new ChartCandleElement();
@@ -229,7 +230,7 @@ namespace WpfApplication1
                 });
 
             candleManager.Start(_candleSeries);
-            chartw.Show();   */
+               
         }
 
         private void PorfolioComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
