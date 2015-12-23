@@ -12,7 +12,7 @@
         <Button Content="Sell for best ask" HorizontalAlignment="Left" Margin="123,80,0,0" VerticalAlignment="Top" Width="96" Click="SellBestAsk"/>
         <Button Content="Снять все заявки" HorizontalAlignment="Left" Margin="236,80,0,0" VerticalAlignment="Top" Width="101" RenderTransformOrigin="-0.002,-0.023" Click="Button_Click"/>
         <Button Content="Получить свечки" HorizontalAlignment="Left" Margin="236,45,0,0" VerticalAlignment="Top" Width="101" RenderTransformOrigin="-0.108,-0.106" Click="GetCandelsClick1"/>
-        <Button Content="Start Stratege" HorizontalAlignment="Left" Margin="236,114,0,0" VerticalAlignment="Top" Width="101" Height="22" Click="Button_Click_1"/>
+        <Button Content="Start Stratege" HorizontalAlignment="Left" Margin="236,114,0,0" VerticalAlignment="Top" Width="101" Height="22" Click="StartstrategyClick"/>
 
     </Grid>
 </Window>

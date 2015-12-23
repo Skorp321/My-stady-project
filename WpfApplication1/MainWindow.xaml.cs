@@ -36,6 +36,7 @@ namespace WpfApplication1
         private TimeSpan _timeSpan;
         private ChartArea _area;
         private ChartCandleElement _candlesElem;
+        private ChartIndicatorElement _indicatorElement;
 
         private ExchangeBoard _board=ExchangeBoard.MicexJunior;
         private string _code = "LKOH";
@@ -185,24 +186,40 @@ namespace WpfApplication1
             _chartWindow.Show(); //Оображаем окно для чарта
 
             // Создаем новую область и помещаем ее в каллекциб областей нашего окна
-            _area = new ChartArea(); 
+            _area = new ChartArea();
             _chartWindow.Chart.Areas.Add(_area);
 
-            _candlesElem=new ChartCandleElement();
+            _candlesElem = new ChartCandleElement();
             _area.Elements.Add(_candlesElem);
 
-            //Создаем свечки
-            var candleManager = new CandleManager(_trader);
-            _timeSpan = TimeSpan.FromMinutes(5);                 // Интервал наших свечек
-            _candleSeries=new CandleSeries(typeof(TimeFrameCandle), _sec, _timeSpan);
-            _candleSeries.ProcessCandle+=candle=>this.GuiAsync(() =>
+            _indicatorElement = new ChartIndicatorElement
                 {
-                    // Если свеча закончена, то отображаем ее на график
-                    if (candle.State==CandleStates.Finished)
-                        _chartWindow.Chart.Draw(_candlesElem, candle);
-                });
+                    Title = "Боллинджер",
+                };
+            _area.Elements.Add(_indicatorElement);
 
-            candleManager.Start(_candleSeries);
+            //Создаем свечки
+            _candleManager = new CandleManager(_trader);
+            _timeSpan = TimeSpan.FromMinutes(5); // Интервал наших свечек
+            _candleSeries = new CandleSeries(typeof (TimeFrameCandle), _sec, _timeSpan);
+            
+            _candleSeries.ProcessCandle += candle =>
+                {
+                    var bollinger = candle.State == CandleStates.Finished
+                                        ? new CandleIndicatorValue(new BollingerBands() {Length = 10, Width = 2}, candle)
+                                        : null;
+                    this.GuiAsync(() =>
+                        {
+                            // Если свеча закончена, то отображаем ее на график
+                            if (candle.State == CandleStates.Finished)
+                                _chartWindow.Chart.Draw(candle.OpenTime, new Dictionary<IChartElement, object>
+                                    {
+                                        {_candlesElem, candle},
+                                        {_indicatorElement, bollinger}
+                                    });
+                        });
+                };
+            _candleManager.Start(_candleSeries);
         }
 
         private void PorfolioComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -213,7 +230,7 @@ namespace WpfApplication1
             
         }
 
-        private void Button_Click_1(object sender, RoutedEventArgs e)
+        private void StartstrategyClick(object sender, RoutedEventArgs e)
         {
             _port = (Portfolio) PorfolioComboBox.SelectedItem;
             var candleManager = new CandleManager(_trader);
