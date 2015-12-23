@@ -16,8 +16,8 @@ namespace WpfApplication1
     {
         private readonly BollingerBands _bands;
         private readonly CandleSeries _series;
-        
-        private BollingerStrategy(BollingerBands bands, CandleSeries series)
+
+        public BollingerStrategy(BollingerBands bands, CandleSeries series)
         {
             _bands = bands;
             _series = series;
@@ -25,7 +25,7 @@ namespace WpfApplication1
         
         private void MainAlgorithm(Candle candle)
         {
-            _bands.Process(candle.ClosePrice);
+            _bands.Process(candle);
             var timeFrame = (TimeSpan) candle.Arg;
             var time = timeFrame.GetCandleBounds(Security.LastChangeTime).Min - timeFrame;
             if (candle.OpenTime>=time && _bands.IsFormed)

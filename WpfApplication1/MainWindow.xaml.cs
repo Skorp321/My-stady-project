@@ -7,6 +7,7 @@ using System.Security;
 using System.Windows.Controls;
 
 using StockSharp.Algo.Candles;
+using StockSharp.Algo.Indicators;
 using StockSharp.BusinessEntities;
 using StockSharp.Messages;
 using StockSharp.Quik;
@@ -209,6 +210,23 @@ namespace WpfApplication1
             //Определяем тип рынка портфеля и заполняем комбобокс инструментами для этого портфеля
             _board = GetExchengeBoardPort((Portfolio)PorfolioComboBox.SelectedItem);
             SecurityComboBox.ItemsSource = _trader.Securities.Where(s => s.Board == _board);
+            
+        }
+
+        private void Button_Click_1(object sender, RoutedEventArgs e)
+        {
+            _port = (Portfolio) PorfolioComboBox.SelectedItem;
+            var candleManager = new CandleManager(_trader);
+            var candleSeries = new CandleSeries(typeof(TimeFrameCandle), _sec, TimeSpan.FromSeconds(10));
+            var strategy = new BollingerStrategy(new BollingerBands() {Length = 10, Width = 2}, candleSeries)
+                {
+                    Connector = _trader,
+                    Security = _sec,
+                    Volume = 1,
+                    Portfolio = _port
+                };
+            strategy.Start();
+            candleManager.Start(candleSeries);
         }
     }
 }
